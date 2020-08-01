@@ -16,7 +16,7 @@ Example Config:
 
 ```
 device_tracker:
-  - platform: tplink_router
+  - platform: arris3442
     host: ROUTER_IP_ADDRESS
     username: ROUTER_USERNAME
     password: !secret tplink_router_password
