@@ -1,4 +1,3 @@
-from firmware import get_firmware_handler
 
 from bs4 import BeautifulSoup
 from Crypto.Cipher import AES
@@ -7,22 +6,34 @@ import json
 import re
 import requests
 import sys
+import binascii
+import os
+import logging
 
+import voluptuous as vol
 
 from homeassistant.components.device_tracker import (
-    DOMAIN,
-    PLATFORM_SCHEMA,
-    DeviceScanner,
+	DOMAIN,
+	PLATFORM_SCHEMA,
+	DeviceScanner,
 )
 from homeassistant.const import (
-    CONF_HOST,
-    CONF_PASSWORD,
-    CONF_USERNAME,
-    HTTP_HEADER_X_REQUESTED_WITH,
+	CONF_HOST,
+	CONF_PASSWORD,
+	CONF_USERNAME,
+	HTTP_HEADER_X_REQUESTED_WITH,
 )
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
+
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
+	{
+		vol.Required(CONF_HOST): cv.string,
+		vol.Required(CONF_PASSWORD): cv.string,
+		vol.Required(CONF_USERNAME): cv.string,
+	}
+)
 
 def get_scanner(hass, config):
 	scanner = Arris_3442_Scanner(config)
@@ -31,7 +42,7 @@ def get_scanner(hass, config):
 	
 	
 class Arris_3442_Scanner(DeviceScanner):
-	def __init__(self, config[DOMAIN]):
+	def __init__(self, config):
 		host = config[CONF_HOST]
 		password = config[CONF_PASSWORD]
 		username = config[CONF_USERNAME]
@@ -116,3 +127,72 @@ class Arris_3442_Scanner(DeviceScanner):
 				print("  IP: " + i[2])
 				maclist.append(i[1])
 		return maclist
+	
+
+	
+#Firmware
+
+def get_firmware_handler(soup: BeautifulSoup):
+	if bool(str(soup.head).count("01.01.117.01.EURO")):
+		print("Auto-detected firmware version 01.01.117.01.EURO")
+		return FirmwareMid2018(soup)
+	else:
+		print("Auto-detected firmware version 01.02.037.03.12.EURO.SIP")
+		return FirmwareEarly2019(soup)
+
+
+class Firmware():
+	def __init__(self, soup: BeautifulSoup):
+		self.soup = soup
+
+	def get_salt_and_iv(self) -> tuple:
+		pass
+
+	def get_login_data(self, encrypt_data: bytes, username: str, salt: str, iv: str, associated_data: str) -> dict:
+		pass
+
+	def get_csrf_nonce(self, login_response, key: bytes, iv: str):
+		pass
+
+
+class FirmwareEarly2019(Firmware):
+	def get_salt_and_iv(self):
+		their_salt = re.search(r".*var mySalt = '(.+)';.*", str(self.soup.head))[1]
+		their_iv = re.search(r".*var myIv = '(.+)';.*", str(self.soup.head))[1]
+		salt = bytes.fromhex(their_salt)
+		iv = bytes.fromhex(their_iv)
+
+		return (salt, iv)
+
+	def get_login_data(self, encrypt_data: bytes, username: str, salt: str, iv: str, associated_data: str):
+		return {
+			'EncryptData': binascii.hexlify(encrypt_data).decode("ascii"),
+			'Name': username,
+			'AuthData': associated_data
+		}
+
+	def get_csrf_nonce(self, login_response, key: bytes, iv: str):
+		decCipher = AES.new(key, AES.MODE_CCM, iv)
+		decCipher.update(bytes("nonce".encode()))
+		decryptData = decCipher.decrypt(bytes.fromhex(login_response['encryptData']))
+
+		return decryptData[:32].decode()
+
+
+class FirmwareMid2018(Firmware):
+	def get_salt_and_iv(self):
+		salt = os.urandom(8)
+		iv = os.urandom(8)
+		return (salt, iv)
+
+	def get_login_data(self, encrypt_data: bytes, username: str, salt: str, iv: str, associated_data: str):
+		return {
+			'EncryptData': binascii.hexlify(encrypt_data).decode("ascii"),
+			'Name': username,
+			'Salt': binascii.hexlify(salt).decode("ascii"),
+			'Iv': binascii.hexlify(iv).decode("ascii"),
+			'AuthData': associated_data
+		}
+
+	def get_csrf_nonce(self, login_response, key: bytes, iv: str):
+		return login_response['nonce']
