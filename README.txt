@@ -1,5 +1,7 @@
 # ARRIS 3442 Device Tracker for Home Assistant
 
+WARNING, THIS REPO IS WIP AND DOES NOT WORK YET
+
 This repository allows users to create a custom component to use the arris device tracker.
 
 Installation:
