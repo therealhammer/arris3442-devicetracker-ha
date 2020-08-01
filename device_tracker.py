@@ -108,9 +108,11 @@ class Arris_3442_Scanner(DeviceScanner):
 	def getDevices(session):
 		deviceWeb = session.get(f"{url}/php/status_lan_data.php?&lanData%5BdhcpDevInfo%5D=&lanData%5B")
 		devices = json.loads(deviceWeb.text)['dhcpDevInfo']
+		maclist = []
 		for i in devices:
 			if (i[4] == "true"):
 				print("Device: " + i[0])
 				print("  MAC: " + i[1])
 				print("  IP: " + i[2])
-		return devices
+				maclist.append(i[1])
+		return maclist
