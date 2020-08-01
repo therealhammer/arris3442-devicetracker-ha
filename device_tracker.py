@@ -36,9 +36,16 @@ class Arris_3442_Scanner(DeviceScanner):
 		password = config[CONF_PASSWORD]
 		username = config[CONF_USERNAME]
 		
+		session = requests.Session()
+		
 		self.success_init = False
+		
 		try:
-			self.
+			self.login(session, host, username, password)
+			self.getDevices(session)
+			self.success_init = False
+		except requests.exceptions.ReaquestException:
+			_LOGGER.debut("RequestException in %s", __class__.__name__)
 			
 	def login(session, url, username, password):
 		r = session.get(f"{url}")
@@ -97,3 +104,13 @@ class Arris_3442_Scanner(DeviceScanner):
 		)
 
 		r = session.post(f"{url}/php/ajaxSet_Session.php")
+		
+	def getDevices(session):
+		deviceWeb = session.get(f"{url}/php/status_lan_data.php?&lanData%5BdhcpDevInfo%5D=&lanData%5B")
+		devices = json.loads(deviceWeb.text)['dhcpDevInfo']
+		for i in devices:
+			if (i[4] == "true"):
+				print("Device: " + i[0])
+				print("  MAC: " + i[1])
+				print("  IP: " + i[2])
+		return devices
