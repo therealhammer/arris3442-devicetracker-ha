@@ -46,6 +46,8 @@ class Arris_3442_Scanner(DeviceScanner):
 		
 		self.session = requests.Session()
 		
+		self.url = host
+		
 		self.last_results = {}
 		
 		self.success_init = False
@@ -118,7 +120,7 @@ class Arris_3442_Scanner(DeviceScanner):
 		
 	def getDevices(self, session):
 		_LOGGER.warning("Trying to get devices")
-		deviceWeb = session.get(f"{url}/php/status_lan_data.php?&lanData%5BdhcpDevInfo%5D=&lanData%5B")
+		deviceWeb = session.get(f"{self.url}/php/status_lan_data.php?&lanData%5BdhcpDevInfo%5D=&lanData%5B")
 		devices = json.loads(deviceWeb.text)['dhcpDevInfo']
 		self.last_results = {}
 		for i in devices:
@@ -126,18 +128,17 @@ class Arris_3442_Scanner(DeviceScanner):
 				_LOGGER.info("Device: " + i[0])
 				_LOGGER.info("  MAC: " + i[1])
 				_LOGGER.info("  IP: " + i[2])
-				self.last_results.update( {"dev_id": i[1], "location_name":"home" })
+				self.last_results.update( {i[1] :  i[0] })
 		return devices
 	
 	def scan_devices(self):
 		_LOGGER.warning("Trying to scan_devices")
-		self.getDevices(self, self.session)
+		self.getDevices(self.session)
 		return self.last_results.keys()
-		#TODO
 		
 	def get_device_name(self, device):
 		_LOGGER.warning("Trying to get_device_name")
-		#TODO
+        return self.last_results.get(device)
 		
 		
 	

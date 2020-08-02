@@ -1,6 +1,8 @@
 # ARRIS 3442 Device Tracker for Home Assistant
 
-WARNING, THIS REPO IS WIP AND DOES NOT WORK YET
+WARNING, THIS REPO IS WIP AND DOES NOT FULLY WORK YET
+
+This is the first kinda working commit of this project. Please feel free try it and give feedback.
 
 This repository allows users to create a custom component to use the arris device tracker.
 
@@ -17,7 +19,7 @@ Example Config:
 ```
 device_tracker:
   - platform: arris3442
-    host: ROUTER_IP_ADDRESS
+    host: ROUTER_IP_ADDRESS (with http://)
     username: ROUTER_USERNAME
     password: !secret tplink_router_password
 ```
