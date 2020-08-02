@@ -48,6 +48,10 @@ class Arris_3442_Scanner(DeviceScanner):
 		
 		self.url = host
 		
+		self.username = username
+		
+		self.password = password
+		
 		self.last_results = {}
 		
 		self.success_init = False
@@ -60,7 +64,7 @@ class Arris_3442_Scanner(DeviceScanner):
 			_LOGGER.debug("RequestException in %s", __class__.__name__)
 			
 	def login(self, session, url, username, password):
-		_LOGGER.warning("Trying logging into arris3442")
+		#_LOGGER.warning("Trying logging into arris3442")
 		r = session.get(f"{url}")
 		# parse HTML
 		soup = BeautifulSoup(r.text, "lxml")
@@ -119,7 +123,7 @@ class Arris_3442_Scanner(DeviceScanner):
 		r = session.post(f"{url}/php/ajaxSet_Session.php")
 		
 	def getDevices(self, session):
-		_LOGGER.warning("Trying to get devices")
+		#_LOGGER.warning("Trying to get devices")
 		deviceWeb = session.get(f"{self.url}/php/status_lan_data.php?&lanData%5BdhcpDevInfo%5D=&lanData%5B")
 		devices = json.loads(deviceWeb.text)['dhcpDevInfo']
 		self.last_results = {}
@@ -132,13 +136,16 @@ class Arris_3442_Scanner(DeviceScanner):
 		return devices
 	
 	def scan_devices(self):
-		_LOGGER.warning("Trying to scan_devices")
+		#_LOGGER.warning("Trying to scan_devices")
+		del self.session
+		self.session = requests.Session()
+		self.login(self.session, self.url, self.username, self.password)
 		self.getDevices(self.session)
 		return self.last_results.keys()
 		
 	def get_device_name(self, device):
-		_LOGGER.warning("Trying to get_device_name")
-        return self.last_results.get(device)
+		#_LOGGER.warning("Trying to get_device_name")
+		return self.last_results.get(device)
 		
 		
 	
