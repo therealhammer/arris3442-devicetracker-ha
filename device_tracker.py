@@ -17,12 +17,8 @@ from homeassistant.components.device_tracker import (
 	PLATFORM_SCHEMA,
 	DeviceScanner,
 )
-from homeassistant.const import (
-	CONF_HOST,
-	CONF_PASSWORD,
-	CONF_USERNAME,
-	HTTP_HEADER_X_REQUESTED_WITH,
-)
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+
 import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,7 +32,8 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 )
 
 def get_scanner(hass, config):
-	scanner = Arris_3442_Scanner(config)
+	_LOGGER.info("Calling get_scanner")
+	scanner = Arris_3442_Scanner(config[DOMAIN])
 	if scanner.success_init:
 		return scanner
 	
@@ -47,18 +44,21 @@ class Arris_3442_Scanner(DeviceScanner):
 		password = config[CONF_PASSWORD]
 		username = config[CONF_USERNAME]
 		
-		session = requests.Session()
+		self.session = requests.Session()
+		
+		self.last_results = {}
 		
 		self.success_init = False
 		
 		try:
-			self.login(session, host, username, password)
-			self.getDevices(session)
-			self.success_init = False
-		except requests.exceptions.ReaquestException:
-			_LOGGER.debut("RequestException in %s", __class__.__name__)
+			self.login(self.session, host, username, password)
+			self.getDevices(self.session)
+			self.success_init = True
+		except requests.exceptions.RequestException:
+			_LOGGER.debug("RequestException in %s", __class__.__name__)
 			
-	def login(session, url, username, password):
+	def login(self, session, url, username, password):
+		_LOGGER.warning("Trying logging into arris3442")
 		r = session.get(f"{url}")
 		# parse HTML
 		soup = BeautifulSoup(r.text, "lxml")
@@ -92,7 +92,7 @@ class Arris_3442_Scanner(DeviceScanner):
 		)
 		
 		if not r.ok or json.loads(r.text)['p_status'] == "Fail":
-			print("login failure", file=sys.stderr)
+			_LOGGER.warning("login failure", file=sys.stderr)
 			exit(-1)
 			
 		result = json.loads(r.text)
@@ -116,17 +116,30 @@ class Arris_3442_Scanner(DeviceScanner):
 
 		r = session.post(f"{url}/php/ajaxSet_Session.php")
 		
-	def getDevices(session):
+	def getDevices(self, session):
+		_LOGGER.warning("Trying to get devices")
 		deviceWeb = session.get(f"{url}/php/status_lan_data.php?&lanData%5BdhcpDevInfo%5D=&lanData%5B")
 		devices = json.loads(deviceWeb.text)['dhcpDevInfo']
-		maclist = []
+		self.last_results = {}
 		for i in devices:
 			if (i[4] == "true"):
-				print("Device: " + i[0])
-				print("  MAC: " + i[1])
-				print("  IP: " + i[2])
-				maclist.append(i[1])
-		return maclist
+				_LOGGER.info("Device: " + i[0])
+				_LOGGER.info("  MAC: " + i[1])
+				_LOGGER.info("  IP: " + i[2])
+				self.last_results.update( {"dev_id": i[1], "location_name":"home" })
+		return devices
+	
+	def scan_devices(self):
+		_LOGGER.warning("Trying to scan_devices")
+		self.getDevices(self, self.session)
+		return self.last_results.keys()
+		#TODO
+		
+	def get_device_name(self, device):
+		_LOGGER.warning("Trying to get_device_name")
+		#TODO
+		
+		
 	
 
 	
@@ -134,10 +147,10 @@ class Arris_3442_Scanner(DeviceScanner):
 
 def get_firmware_handler(soup: BeautifulSoup):
 	if bool(str(soup.head).count("01.01.117.01.EURO")):
-		print("Auto-detected firmware version 01.01.117.01.EURO")
+		_LOGGER.info("Auto-detected firmware version 01.01.117.01.EURO")
 		return FirmwareMid2018(soup)
 	else:
-		print("Auto-detected firmware version 01.02.037.03.12.EURO.SIP")
+		_LOGGER.info("Auto-detected firmware version 01.02.037.03.12.EURO.SIP")
 		return FirmwareEarly2019(soup)
 
 
