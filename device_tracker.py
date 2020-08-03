@@ -38,19 +38,15 @@ def get_scanner(hass, config):
 
 class Arris_3442_Scanner(DeviceScanner):
 	def __init__(self, config):
-		host = config[CONF_HOST]
-		password = config[CONF_PASSWORD]
-		username = config[CONF_USERNAME]
-		
 		self.session = requests.Session()
-		self.url = host
-		self.username = username
-		self.password = password
+		self.url = config[CONF_HOST]
+		self.username = config[CONF_USERNAME]
+		self.password = config[CONF_PASSWORD]
 		self.last_results = {}
 		self.success_init = False
 		
 		try:
-			self.login(self.session, host, username, password)
+			self.login(self.session, self.url , self.username, self.password)
 			self.getDevices(self.session)
 			self.success_init = True
 		except requests.exceptions.RequestException:
