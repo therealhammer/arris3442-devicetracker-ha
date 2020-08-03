@@ -9,7 +9,6 @@ import sys
 import binascii
 import os
 import logging
-
 import voluptuous as vol
 
 from homeassistant.components.device_tracker import (
@@ -36,8 +35,7 @@ def get_scanner(hass, config):
 	scanner = Arris_3442_Scanner(config[DOMAIN])
 	if scanner.success_init:
 		return scanner
-	
-	
+
 class Arris_3442_Scanner(DeviceScanner):
 	def __init__(self, config):
 		host = config[CONF_HOST]
@@ -45,15 +43,10 @@ class Arris_3442_Scanner(DeviceScanner):
 		username = config[CONF_USERNAME]
 		
 		self.session = requests.Session()
-		
 		self.url = host
-		
 		self.username = username
-		
 		self.password = password
-		
 		self.last_results = {}
-		
 		self.success_init = False
 		
 		try:
@@ -146,11 +139,7 @@ class Arris_3442_Scanner(DeviceScanner):
 	def get_device_name(self, device):
 		#_LOGGER.warning("Trying to get_device_name")
 		return self.last_results.get(device)
-		
-		
-	
 
-	
 #Firmware
 
 def get_firmware_handler(soup: BeautifulSoup):
@@ -160,7 +149,6 @@ def get_firmware_handler(soup: BeautifulSoup):
 	else:
 		_LOGGER.info("Auto-detected firmware version 01.02.037.03.12.EURO.SIP")
 		return FirmwareEarly2019(soup)
-
 
 class Firmware():
 	def __init__(self, soup: BeautifulSoup):
@@ -175,14 +163,12 @@ class Firmware():
 	def get_csrf_nonce(self, login_response, key: bytes, iv: str):
 		pass
 
-
 class FirmwareEarly2019(Firmware):
 	def get_salt_and_iv(self):
 		their_salt = re.search(r".*var mySalt = '(.+)';.*", str(self.soup.head))[1]
 		their_iv = re.search(r".*var myIv = '(.+)';.*", str(self.soup.head))[1]
 		salt = bytes.fromhex(their_salt)
 		iv = bytes.fromhex(their_iv)
-
 		return (salt, iv)
 
 	def get_login_data(self, encrypt_data: bytes, username: str, salt: str, iv: str, associated_data: str):
@@ -196,9 +182,7 @@ class FirmwareEarly2019(Firmware):
 		decCipher = AES.new(key, AES.MODE_CCM, iv)
 		decCipher.update(bytes("nonce".encode()))
 		decryptData = decCipher.decrypt(bytes.fromhex(login_response['encryptData']))
-
 		return decryptData[:32].decode()
-
 
 class FirmwareMid2018(Firmware):
 	def get_salt_and_iv(self):

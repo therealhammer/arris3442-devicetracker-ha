@@ -1,12 +1,14 @@
 # ARRIS 3442 (Vodafone Station) Device Tracker for Home Assistant
 
-This is the first kinda working commit of this project. Please feel free try it and give feedback.
+This is the first kinda working commit of this project. Please feel free to try it and give feedback.
 
-This repository allows users to create a custom component to use the arris router device tracker. The router is mainly distributed by Vodafone in southern germany as "Vodafone Station" for DOCSIS 3.1 cable based connections.
+This repository allows users to create a custom component to use the arris3442 router device tracker. The router is mainly distributed by Vodafone as "Vodafone Station" for DOCSIS 3.1 cable based connections.
+
+The code to log into the router was mainly forked from https://github.com/diveflo/arris-tg3442-reboot. 
 
 Installation:
 1. In the Home Assistant config folder, create a custom_components/arris3442 folder.
-2. Copy \_init__.py, device_tracker.py and manifest.json from this repository into the new folder.
+2. Copy __init__.py, device_tracker.py and manifest.json from this repository into the new folder.
 3. Restart Home Assistant
 4. Add the device_tracker / arris3442 configuration into the configuration.yaml file.
 5. Restart Home Assistant
