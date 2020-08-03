@@ -19,7 +19,7 @@ device_tracker:
   - platform: arris3442
     host: ROUTER_IP_ADDRESS (with http://)
     username: ROUTER_USERNAME
-    password: !secret tplink_router_password
+    password: !secret arris_router_password
 ```
 
 To verify Home Assistant is seeing the devices that are connected to the router, navigate to Developer Tools -> States and search for entities that start with device_tracker. The devices should show up with a source_type attribute of router.
