@@ -77,7 +77,7 @@ class Arris_3442_Scanner(DeviceScanner):
 		
 		login_data = modem.get_login_data(encrypt_data, username, salt, iv, associated_data)
 		
-		r = session.put(
+		r = session.post(
 			f"{url}/php/ajaxSet_Password.php",
 			headers={
 				"Content-Type": "application/json",
